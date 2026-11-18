@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { keys, toCyrillic, translator } from '../i18n';
-import { defaultSettings, fromConfigData, rulesFor, settingsProblems, toConfigData, type Product } from './config';
+import { defaultSettings, fromConfigData, newProduct, point, rulesFor, settingsProblems, toConfigData, type Product } from './config';
 import { fromDriverData, newDriver, ownOffer, resolveDrivers, toDriverData, type Driver } from './driver';
 import { fromLocalInput, left, money, toLocalInput } from './format';
+import { PRODUCT_ICONS, defaultIcon, iconFor } from './product-icons';
 import { bottlesFor, droppedLines, fromOrderData, lineCost, onePerPerson, orderCost, toOrderData } from './order';
 import { DONE_AFTER, fromRoundData, newRound, roundProblems, stage, toRoundData, withNewProducts, type Round } from './round';
 import { shareTrip } from './split';
 import { summarize, type Placed } from './summary';
 
-const milk: Product = { id: 'mleko', name: 'Mleko', unit: 'l', price: 120, step: 0.5, pack: { name: 'flaša', size: 1.5, price: 30 }, active: true };
-const cheese: Product = { id: 'sir', name: 'Sir', unit: 'kg', price: 900, step: 0.25, pack: null, active: true };
-const eggs: Product = { id: 'jaja', name: 'Jaja', unit: 'kom', price: 25, step: 10, pack: null, active: false };
+const milk: Product = { id: 'mleko', name: 'Mleko', unit: 'l', price: 120, step: 0.5, pack: { name: 'flaša', size: 1.5, price: 30 }, active: true, icon: 'bottle' };
+const cheese: Product = { id: 'sir', name: 'Sir', unit: 'kg', price: 900, step: 0.25, pack: null, active: true, icon: 'cheese' };
+const eggs: Product = { id: 'jaja', name: 'Jaja', unit: 'kom', price: 25, step: 10, pack: null, active: false, icon: 'egg' };
 
 const T0 = Date.parse('2026-11-14T08:00:00.000Z');
 const hour = 3_600_000;
@@ -21,6 +22,7 @@ function round(extra: Partial<Round> = {}): Round {
     closesAt: new Date(T0 - 12 * hour).toISOString(),
     meetAt: new Date(T0 + 2 * hour).toISOString(),
     meetPlace: 'Ulaz 3',
+    meetPoint: null,
     bottlesNote: '',
     note: '',
     status: 'open',
@@ -116,10 +118,13 @@ describe('rounds', () => {
   });
 
   it('keeps its own copy of the products and reads back what it wrote', () => {
-    const settings = { ...defaultSettings('Mleko'), products: [milk, eggs], meetPlace: 'Kod česme' };
+    const settings = { ...defaultSettings('Mleko'), products: [milk, eggs], meetPlace: 'Kod česme', meetPoint: { lat: 44.8125, lng: 20.4612 } };
     const r = newRound(settings, T0);
     expect(r.products.map((p) => p.id)).toEqual(['mleko']);
+    expect(r.products[0].icon).toBe('bottle');
     expect(r.meetPlace).toBe('Kod česme');
+    expect(r.meetPoint).toEqual({ lat: 44.8125, lng: 20.4612 });
+    expect(r.meetPoint).not.toBe(settings.meetPoint);
     expect(roundProblems(r)).toEqual([]);
     expect(fromRoundData(toRoundData(r))).toEqual(r);
     expect(withNewProducts(r, settings).map((p) => [p.id, p.active])).toEqual([['mleko', true], ['jaja', false]]);
@@ -223,10 +228,39 @@ describe('what a round adds up to', () => {
 describe('settings', () => {
   it('reads anything and falls back to defaults', () => {
     const s = fromConfigData({ products: [{ id: 'a', name: 'X', price: -3, unit: 'gal', pack: { size: 0 } }, 'junk'], roles: { organize: [] } }, 'Mleko');
-    expect(s.products).toEqual([{ id: 'a', name: 'X', unit: 'l', price: 0, step: 0.5, pack: null, active: true }]);
+    expect(s.products).toEqual([{ id: 'a', name: 'X', unit: 'l', price: 0, step: 0.5, pack: null, active: true, icon: 'bottle' }]);
     expect(s.organize).toEqual(['everyone']);
     expect(s.split).toBe('equal');
+    expect(s.producer.point).toBeNull();
+    expect(s.meetPoint).toBeNull();
     expect(fromConfigData(null, 'Mleko').products[0].name).toBe('Mleko');
+    expect(fromConfigData(null, 'Mleko').products[0].unit).toBe('kom');
+  });
+
+  it('keeps a product’s icon only when its unit offers it', () => {
+    const products = fromConfigData({
+      products: [
+        { id: 'a', name: 'A', unit: 'kom', icon: 'cheese' },
+        { id: 'b', name: 'B', unit: 'kg', icon: 'honey' },
+        { id: 'c', name: 'C', unit: 'kg', icon: 'jar' },
+        { id: 'd', name: 'D', unit: 'l' },
+      ],
+    }).products;
+    expect(products.map((p) => p.icon)).toEqual(['box', 'honey', 'jar', 'bottle']);
+    expect(newProduct('', 'kg').icon).toBe('sack');
+  });
+
+  it('keeps the producer’s and the handing out’s points, rounded, and drops what is not one', () => {
+    const s = fromConfigData({ producer: { point: { lat: 44.63370123, lng: 20.5246 } }, meet_point: { lat: 91, lng: 0 } });
+    expect(s.producer.point).toEqual({ lat: 44.633701, lng: 20.5246 });
+    expect(s.meetPoint).toBeNull();
+    const back = fromConfigData(toConfigData({ ...s, meetPoint: { lat: -33.9, lng: 151.2 } }));
+    expect(back.producer.point).toEqual({ lat: 44.633701, lng: 20.5246 });
+    expect(back.meetPoint).toEqual({ lat: -33.9, lng: 151.2 });
+    expect(point({ lat: '44.8', lng: 20 })).toBeNull();
+    expect(point({ lat: NaN, lng: 20 })).toBeNull();
+    expect(point({ lat: 44.8, lng: 181 })).toBeNull();
+    expect(point(null)).toBeNull();
   });
 
   it('turns the roles into rules: everyone reads, each changes only their own', () => {
@@ -244,6 +278,24 @@ describe('settings', () => {
     expect(settingsProblems({ ...defaultSettings(''), products: [] })).toEqual(['noProducts']);
     expect(settingsProblems(defaultSettings(''))).toEqual(['productName']);
     expect(settingsProblems(defaultSettings('Mleko'))).toEqual([]);
+  });
+});
+
+describe('product icons', () => {
+  it('offers each unit its own icons, the first one by default', () => {
+    for (const unit of ['l', 'kg', 'kom'] as const) {
+      const icons = PRODUCT_ICONS[unit];
+      expect(icons.length).toBeGreaterThan(0);
+      expect(new Set(icons).size).toBe(icons.length);
+      expect(defaultIcon(unit)).toBe(icons[0]);
+    }
+  });
+
+  it('keeps an icon across a change of unit only when the new unit offers it', () => {
+    expect(iconFor('kg', 'jar')).toBe('jar');
+    expect(iconFor('kom', 'jar')).toBe('box');
+    expect(iconFor('l', 'nope')).toBe('bottle');
+    expect(iconFor('l', 7)).toBe('bottle');
   });
 });
 

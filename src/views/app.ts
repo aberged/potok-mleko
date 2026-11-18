@@ -10,6 +10,7 @@ import { boot } from '../store/data';
 import { caps, isEditor, state, update } from '../store/state';
 import { button, confirmDialog, iconButton, menu, notice, toggle, ui } from './common';
 import { icon } from './icons';
+import { mapDialog, mapLink } from './map-picker';
 import { roundView } from './round';
 import { roundFormView } from './round-form';
 import { missingRound, roundsView } from './rounds';
@@ -47,7 +48,10 @@ function topBar() {
   const producer = state.settings.producer;
   const atList = state.screen.kind === 'list';
   const title = producer.name || state.groupName || t('appName');
-  const sub = [producer.place].filter(Boolean).join(' · ');
+  // With a point on the map, the place itself is the link to it.
+  const sub = producer.point
+    ? mapLink(producer.point, [producer.name, producer.place].filter(Boolean).join(', ') || t('producerTitle'), 'producer-map', producer.place || t('showOnMap'))
+    : producer.place;
 
   return html`<header class="pm-topbar" id="topbar">
     <div class="pm-topbar-row">
@@ -138,6 +142,6 @@ export function appView() {
   return html`<div class="pm-root" @click=${closeMenu}>
     ${topBar()}
     <main class="pm-main">${screenView()}</main>
-    ${state.dialog ? confirmDialog() : nothing}${toast()}
+    ${state.dialog?.kind === 'map' ? mapDialog(state.dialog) : state.dialog ? confirmDialog() : nothing}${toast()}
   </div>`;
 }

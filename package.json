@@ -1,5 +1,5 @@
 {
-  "name": "potok-mleko",
+  "name": "potok-narucivanje",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^25.6.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.4",
@@ -18,6 +19,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
     "daisyui": "^5.7.50",
+    "leaflet": "1.9.4",
     "lit-html": "^3.3.3",
     "tailwindcss": "^4.2.2"
   }

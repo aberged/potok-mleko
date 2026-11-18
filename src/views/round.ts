@@ -28,6 +28,8 @@ import {
 } from '../store/actions';
 import { loadDetails } from '../store/data';
 import { state, type RoundValue } from '../store/state';
+import { mapLink } from './map-picker';
+import { productIcon } from './product-icons';
 import { button, card, cardHead, check, field, iconButton, menu, menuItem, money, notice, num, qty, stepper, toggle, ui, unitLabel } from './common';
 import { icon } from './icons';
 import { dateBadge, stageChip, timeLeft } from './rounds';
@@ -87,9 +89,21 @@ function heroCard(model: RoundModel) {
         ${organizerMenu(model)}
       </div>
       <div class="pm-info">
-        ${infoRow('truck', t('atFarm'), html`${when(round.farmAt, lang)}${producer.name ? html` · ${producer.name}` : nothing}${producer.place ? html`, ${producer.place}` : nothing}`)}
+        ${infoRow(
+          'truck',
+          t('atFarm'),
+          html`${when(round.farmAt, lang)}${producer.name ? html` · ${producer.name}` : nothing}${producer.place ? html`, ${producer.place}` : nothing}${producer.point
+            ? html` ${mapLink(producer.point, [producer.name, producer.place].filter(Boolean).join(', ') || t('producerTitle'), 'round-producer-map')}`
+            : nothing}`,
+        )}
         ${infoRow('clock', t('ordersUntil'), html`${when(round.closesAt, lang)}${rest ? html` · <strong class="pm-accent">${rest}</strong>` : nothing}`, 'round-closes')}
-        ${infoRow('pin', t('handout'), `${when(round.meetAt, lang, round.farmAt)}${round.meetPlace ? ` · ${round.meetPlace}` : ''}`)}
+        ${infoRow(
+          'pin',
+          t('handout'),
+          html`${when(round.meetAt, lang, round.farmAt)}${round.meetPlace ? ` · ${round.meetPlace}` : ''}${round.meetPoint
+            ? html` ${mapLink(round.meetPoint, round.meetPlace ? `${t('handout')}: ${round.meetPlace}` : t('meetPlaceLabel'), 'round-meet-map')}`
+            : nothing}`,
+        )}
         ${round.bottlesNote ? infoRow('pack', t('emptyBottles'), round.bottlesNote) : nothing}
         ${round.note ? infoRow('info', t('noteLabel'), html`<span class="pm-pre">${round.note}</span>`) : nothing}
         ${infoRow('person', '', t('organizer', { name: nameOf(model, value.creator_id, value.creator_username) }))}
@@ -135,12 +149,15 @@ function editableOrder(model: RoundModel) {
         const cost = line.qty > 0 ? lineCost(product, line) : null;
         return html`<div class="pm-product ${line.qty > 0 ? 'pm-product-on' : ''}" id="product-${product.id}">
           <div class="pm-product-head">
-            <div class="pm-product-info">
-              <span class="pm-product-name">${product.name}</span>
-              <span class="pm-product-price">
-                ${product.price > 0 ? t('perUnit', { price: money(product.price), unit: unitLabel(product.unit) }) : t('noPrice')}
-              </span>
-              ${product.pack ? html`<span class="pm-product-pack">${packText(product)}</span>` : nothing}
+            <div class="pm-product-title">
+              <span class="pm-product-icon" aria-hidden="true">${productIcon(product.icon, 'size-6')}</span>
+              <div class="pm-product-info">
+                <span class="pm-product-name">${product.name}</span>
+                <span class="pm-product-price">
+                  ${product.price > 0 ? t('perUnit', { price: money(product.price), unit: unitLabel(product.unit) }) : t('noPrice')}
+                </span>
+                ${product.pack ? html`<span class="pm-product-pack">${packText(product)}</span>` : nothing}
+              </div>
             </div>
             ${stepper(line.qty, product.step, product.unit, (n) => setLine(id, product.id, { qty: n }), { id: `qty-${product.id}`, disabled: busy })}
           </div>
@@ -185,7 +202,7 @@ function readOnlyOrder(model: RoundModel, why: string | null) {
       ? html`<ul class="pm-lines" id="my-lines">
             ${entry.cost.lines.map(
               (l) => html`<li>
-                <span>${l.product.name} <strong>${qty(l.line.qty, l.product.unit)}</strong>${l.line.own ? html` <span class="pm-muted">· ${t('ownPackShort')}</span>` : nothing}</span>
+                <span class="pm-line-name">${productIcon(l.product.icon, 'size-4 pm-line-icon')}${l.product.name} <strong>${qty(l.line.qty, l.product.unit)}</strong>${l.line.own ? html` <span class="pm-muted">· ${t('ownPackShort')}</span>` : nothing}</span>
                 <span>${money(l.total)}</span>
               </li>`,
             )}
@@ -289,7 +306,9 @@ function ordersCard(model: RoundModel) {
     html`${cardHead(t('ordersTitle'), 'people', html`<span class="pm-count">${summary.entries.length}</span>`)}
       ${summary.products.length > 0
         ? html`<div class="pm-chips pm-totals-chips" id="product-totals">
-            ${summary.products.map((p) => html`<span class="pm-total-chip"><span>${p.product.name}</span><strong>${qty(p.qty, p.product.unit)}</strong></span>`)}
+            ${summary.products.map(
+              (p) => html`<span class="pm-total-chip">${productIcon(p.product.icon, 'size-4 pm-line-icon')}<span>${p.product.name}</span><strong>${qty(p.qty, p.product.unit)}</strong></span>`,
+            )}
           </div>`
         : nothing}
       ${summary.entries.length === 0
@@ -352,7 +371,7 @@ function producerCard(model: RoundModel) {
         <tbody>
           ${summary.products.map(
             (p) => html`<tr>
-              <th scope="row">${p.product.name}</th>
+              <th scope="row"><span class="pm-line-name">${productIcon(p.product.icon, 'size-4 pm-line-icon')}${p.product.name}</span></th>
               <td>
                 <strong>${qty(p.qty, p.product.unit)}</strong>
                 ${p.bottles > 0 && p.product.pack ? html`<span class="pm-muted pm-small pm-block">${num(p.bottles)} × ${p.product.pack.name || t('packaging')} ${qty(p.product.pack.size, p.product.unit)}</span>` : nothing}

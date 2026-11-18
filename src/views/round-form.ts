@@ -1,6 +1,7 @@
-// Opening or changing a round: the three times, where goods are handed out,
-// a word on empty bottles, which products and at what price, how the trip is
-// shared, and for a new round whether its organizer goes for the goods.
+// Opening or changing a round: the three times, where goods are handed out
+// (in words and on the map), a word on returnable packaging, which products
+// and at what price, how the trip is shared, and for a new round whether its
+// organizer goes for the goods.
 
 import { html, nothing } from 'lit-html';
 import { DRIVERS } from '../model/config';
@@ -9,6 +10,7 @@ import { roundProblems, type RoundProblem } from '../model/round';
 import { changeRoundDraft, goList, openRound, saveRound } from '../store/actions';
 import { canWrite, state, update } from '../store/state';
 import { button, card, cardHead, field, notice, numberField, qty, toggle, ui, unitLabel } from './common';
+import { placeMapButton } from './map-picker';
 
 const PROBLEMS: Record<RoundProblem, 'problemOrder' | 'problemNoProducts' | 'problemProductName'> = {
   order: 'problemOrder',
@@ -46,11 +48,22 @@ export function roundFormView() {
           ${timeField('form-farm-at', t('farmAtLabel'), round.farmAt, (v) => changeRoundDraft((r) => (r.farmAt = v)), problems.includes('order'))}
           ${timeField('form-closes-at', t('closesAtLabel'), round.closesAt, (v) => changeRoundDraft((r) => (r.closesAt = v)), problems.includes('order'))}
           ${timeField('form-meet-at', t('meetAtLabel'), round.meetAt, (v) => changeRoundDraft((r) => (r.meetAt = v)), problems.includes('order'))}
-          ${field(round.meetPlace, (v) => changeRoundDraft((r) => (r.meetPlace = v)), {
-            id: 'form-meet-place',
-            label: t('meetPlaceLabel'),
-            placeholder: t('meetPlacePlaceholder'),
-          })}
+          <div class="pm-place">
+            ${field(round.meetPlace, (v) => changeRoundDraft((r) => (r.meetPlace = v)), {
+              id: 'form-meet-place',
+              label: t('meetPlaceLabel'),
+              placeholder: t('meetPlacePlaceholder'),
+            })}
+            <div>
+              ${placeMapButton(
+                t('mapMeetTitle'),
+                round.meetPoint,
+                state.settings.meetPoint ?? state.settings.producer.point,
+                (p) => changeRoundDraft((r) => (r.meetPoint = p)),
+                'form-meet-map',
+              )}
+            </div>
+          </div>
         </div>
         ${field(round.bottlesNote, (v) => changeRoundDraft((r) => (r.bottlesNote = v)), {
           id: 'form-bottles',

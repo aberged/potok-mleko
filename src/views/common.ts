@@ -329,7 +329,7 @@ export function dialog(title: string, body: TemplateResult, actions: TemplateRes
 
 export function confirmDialog() {
   const d = state.dialog;
-  if (!d) return nothing;
+  if (d?.kind !== 'confirm') return nothing;
   const t = ui.t;
 
   return dialog(

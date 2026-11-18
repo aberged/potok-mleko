@@ -1,11 +1,11 @@
-# potok mleko
+# potok naručivanje
 
-Zajednička kupovina od proizvođača: Potok aplikacija u kojoj komšije zajedno naručuju mleko (i drugo) direktno od poljoprivrednika. Napravljena je po šablonu [potok-vite](https://github.com/aberged/potok-vite/tree/align-alt-descriptions): Vite, TypeScript, Tailwind, daisyUI sa prefiksom `d-` i lit-html.
+Zajedničko naručivanje od proizvođača: Potok aplikacija u kojoj komšije zajedno naručuju direktno od proizvođača, na litar, kilogram ili komad: mleko, sir, jaja, med, povrće, hleb ili rasad. Napravljena je po šablonu [potok-vite](https://github.com/aberged/potok-vite/tree/align-alt-descriptions): Vite, TypeScript, Tailwind, daisyUI sa prefiksom `d-` i lit-html.
 
 Za svaku turu aplikacija vodi:
 
-- kada se ide kod proizvođača, do kada se naručuje, gde i kada se roba deli i gde se ostavljaju prazne flaše;
-- ko šta naručuje i koliko, i da li ima svoju ambalažu (ambalaža proizvođača se plaća po flaši: ⌈količina / veličina flaše⌉);
+- kada se ide kod proizvođača, do kada se naručuje, gde i kada se roba deli (rečima i na mapi) i gde se ostavlja povratna ambalaža;
+- ko šta naručuje i koliko, i da li ima svoju ambalažu (ambalaža proizvođača se plaća po komadu: ⌈količina / veličina pakovanja⌉);
 - ko ide po robu, a ko je rezerva, i koliko košta prevoz;
 - koliko svako duguje: roba, ambalaža i deo prevoza;
 - šta se plaća proizvođaču, sa spiskom koji može da se kopira;
@@ -15,11 +15,31 @@ Za svaku turu aplikacija vodi:
 
 | Ko | Šta |
 |---|---|
-| urednik grupe (`edit_group`, admin) | upisuje proizvođača, proizvode, cene i ambalažu, način deljenja prevoza i uloge; briše turu ili dvostruku porudžbinu |
-| ko sme da otvara ture (podrazumevano svi članovi) | otvara turu i menja svoju: vreme, mesto, cene u toj turi, zatvara i ponovo otvara porudžbine, otkazuje |
+| urednik grupe (`edit_group`, admin) | upisuje proizvođača i njegovo mesto na mapi, proizvode sa ikonicom, cenama i ambalažom, način deljenja prevoza, uobičajeno mesto podele i uloge; briše turu ili dvostruku porudžbinu |
+| ko sme da otvara ture (podrazumevano svi članovi) | otvara turu i menja svoju: vreme, mesto (i na mapi), cene u toj turi, zatvara i ponovo otvara porudžbine, otkazuje |
 | ko sme da naručuje (podrazumevano svi članovi) | naručuje i menja ili otkazuje svoju porudžbinu; javlja se da ide po robu ili kao rezerva |
 | onaj ko ide po robu | upisuje trošak prevoza, „roba je preuzeta“ i štiklira ko je preuzeo i ko je platio |
 | svi članovi | vide sve ture i porudžbine i biraju svoja obaveštenja |
+
+## Ikonice proizvoda
+
+Urednik svakom proizvodu bira ikonicu, od onih koje nudi njegova jedinica. Prva u spisku je podrazumevana:
+
+| Jedinica | Ikonice |
+|---|---|
+| litar | flaša, kanta za mleko, tegla, boca, kap, čaša |
+| kilogram | džak, sir, meso, voće, povrće, med, tegla |
+| komad | paket, jaje, hleb, pile, rasad, kolač |
+
+Kad se jedinica promeni, ikonica ostaje ako je nova jedinica nudi (tegla između litra i kilograma), a inače postaje podrazumevana. Spiskovi su u [src/model/product-icons.ts](src/model/product-icons.ts), a crteži u [src/views/product-icons.ts](src/views/product-icons.ts): sopstveni crteži aplikacije, na mreži 24 sa potezom 1.5, kao Heroicons. Članovi vide ikonicu uz proizvod u porudžbini, zbirovima i spisku za proizvođača.
+
+## Mesta na mapi
+
+Mesto proizvođača (u podešavanjima), uobičajeno mesto podele (u podešavanjima) i mesto podele jedne ture (u obrascu ture) mogu da dobiju i tačku na mapi: **Izaberi na mapi** otvara Leaflet mapu sa Potokovim pločicama (`getMapConfig`), na kojoj se pin stavlja dodirom i prevlači, a **Pin u sredinu mape** služi tastaturi. Tačka se čuva u podacima aplikacije (`producer.point`, `meet_point`), nikad u lokaciji grupe.
+
+Gde je tačka, stoji link **Prikaži na mapi** (u gornjoj traci je to samo mesto proizvođača, a u turi i mesto podele). Link zove `potok.openMap({lat, lng, label})`, a Potok vodi gledaoca na mapu grupa (`/groups/<koren>/map?point=…&group=…&label=…`): pin sa slikom grupe i kartica sa imenom grupe i oznakom. Stranica Potoka bez `openMap` (starija verzija) dobija poruku da treba ponovo da se otvori.
+
+Nova tura prepisuje tačku mesta podele iz podešavanja, kao i reči.
 
 Prevoz se deli jednako na svaku porudžbinu ili srazmerno iznosu porudžbine; to bira urednik, a tura pamti izbor iz trenutka kad je otvorena. Delovi su u celim dinarima i u zbiru daju tačno upisan trošak (ostatak ide najvećim ostacima).
 
@@ -29,10 +49,12 @@ Sve je u data vrednostima aplikacije, u tri kolekcije sa pravilima, i u config-u
 
 | Gde | Šta | Pravilo |
 |---|---|---|
-| config | proizvođač, proizvodi (`id`, naziv, jedinica `l`/`kg`/`kom`, cena, korak, ambalaža `{name, size, price}`), deljenje prevoza, uobičajeno mesto podele, uloge | menjaju samo urednici, sa `revision` |
-| `rounds` | tura: `farm_at`, `closes_at`, `meet_at`, `meet_place`, `bottles_note`, `note`, `status` (`open`/`closed`/`cancelled`), kopija proizvoda sa cenama, `split` | piše ko otvara ture, čitaju svi, autor menja svoju |
+| config | proizvođač (`name`, `place`, `phone`, `note`, `point: {lat, lng}`), proizvodi (`id`, naziv, jedinica `l`/`kg`/`kom`, cena, korak, ambalaža `{name, size, price}`, `icon`), deljenje prevoza, uobičajeno mesto podele (`meet_place`, `meet_point`), uloge | menjaju samo urednici, sa `revision` |
+| `rounds` | tura: `farm_at`, `closes_at`, `meet_at`, `meet_place`, `meet_point`, `bottles_note` (povratna ambalaža; ime ključa je ostalo iz vremena flaša), `note`, `status` (`open`/`closed`/`cancelled`), kopija proizvoda sa cenama i ikonicama, `split` | piše ko otvara ture, čitaju svi, autor menja svoju |
 | `orders` | porudžbina: `round`, `lines: {proizvod: {qty, own}}`, `note` | piše ko naručuje, čitaju svi, autor menja svoju |
 | `drivers` | ponuda da ide po robu: `round`, `at`, `withdrawn`, `cost`, `picked_up`, `handover: {porudžbina: {got, paid}}` | piše ko naručuje, čitaju svi, autor menja svoju |
+
+Tačka je `{lat, lng}` u stepenima, zaokružena na šest decimala; sve drugo se čita kao bez tačke. Proizvod bez ikonice (podaci od ranije) dobija podrazumevanu za svoju jedinicu, a stare ture tako i ostaju, jer drže svoju kopiju proizvoda.
 
 Pravila prave podešavanja (`rulesFor` u [src/model/config.ts](src/model/config.ts)), pa Potok proverava svaki upis: niko ne menja tuđu porudžbinu, tuđu turu ni beleške onoga ko ide po robu.
 
@@ -74,12 +96,16 @@ Stranica Potoka upisuje jezik u `<html lang>` okvira: `sr`, `sr-Cyrl` ili `en`. 
 | [src/model/model.test.ts](src/model/model.test.ts) | vitest testovi |
 | [src/store/](src/store/) | stanje, čitanje i žive izmene (`data.ts`), upisi (`actions.ts`) |
 | [src/views/](src/views/) | lit-html prikaz: lista tura, tura, obrazac ture, podešavanja |
+| [src/views/map-picker.ts](src/views/map-picker.ts) | dijalog sa mapom (Leaflet), dugme „Izaberi na mapi“ i link „Prikaži na mapi“ |
+| [src/model/product-icons.ts](src/model/product-icons.ts), [src/views/product-icons.ts](src/views/product-icons.ts) | ikonice proizvoda po jedinici i njihovi crteži |
+| [src/leaflet.css](src/leaflet.css) | Leaflet-ov CSS bez slika, kao u aplikaciji Mapa |
 | [src/views/icons.ts](src/views/icons.ts) | Heroicons, piše ga [scripts/icons.py](scripts/icons.py) iz `../potok-ide/deps/heroicons` |
 | [src/dev-tools.ts](src/dev-tools.ts), [src/dev-theme.css](src/dev-theme.css) | samo za dev |
-| [src/potok.ts](src/potok.ts), [src/potok-dev.ts](src/potok-dev.ts), [vite.config.ts](vite.config.ts) | iz šablona, bez izmena |
+| [src/potok.ts](src/potok.ts), [src/potok-dev.ts](src/potok-dev.ts) | iz šablona; dodat `openMap` |
+| [vite.config.ts](vite.config.ts) | iz šablona, bez izmena |
 
 ## Licenca
 
-MIT, vidi [LICENSE](LICENSE). Ikonice su iz Heroicons-a (MIT), vidi [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT, vidi [LICENSE](LICENSE). Ikonice aplikacije su iz Heroicons-a (MIT), a ikonice proizvoda su sopstveni crteži; Leaflet-ov CSS je pod BSD-2-Clause. Vidi [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Build nosi i licence koda koji pakuje: pun tekst licence lit-html-a (BSD-3-Clause) na vrhu skripte, a u CSS-u napomene Tailwind CSS-a i daisyUI-ja (MIT).
+Build nosi i licence koda koji pakuje: pune tekstove licenci Leaflet-a (BSD-2-Clause) i lit-html-a (BSD-3-Clause) na vrhu skripte, a u CSS-u napomene Tailwind CSS-a i daisyUI-ja (MIT).

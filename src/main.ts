@@ -6,16 +6,16 @@ import { appView } from './views/app';
 import { setUi, ui } from './views/common';
 
 if (import.meta.env.DEV) {
-  const { seedDevMleko } = await import('./dev-tools');
+  const { seedDev } = await import('./dev-tools');
   const { installDevPotok } = await import('./potok-dev');
-  seedDevMleko();
+  seedDev();
   installDevPotok();
 }
 
 // No top-level await below this point: the build wrapper (vite.config.ts) runs
 // this code inside a plain function.
 
-const root = document.querySelector<HTMLElement>('#mleko')!;
+const root = document.querySelector<HTMLElement>('#narucivanje')!;
 
 setUi(document.documentElement.lang);
 setActionsTranslator(ui.t);

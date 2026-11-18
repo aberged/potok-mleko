@@ -16,17 +16,24 @@ const CONFIG_KEY = 'potok-dev:config:default';
 const VALUES_KEY = 'potok-dev:values';
 
 function sampleSettings(): Settings {
-  const milk = { ...newProduct('Mleko', 'l'), id: 'mleko', price: 120, step: 0.5, pack: { name: 'flaša', size: 1.5, price: 30 } };
-  const sour = { ...newProduct('Kiselo mleko', 'l'), id: 'kiselo', price: 180, step: 0.5, pack: { name: 'tegla', size: 1, price: 40 } };
-  const cheese = { ...newProduct('Sir', 'kg'), id: 'sir', price: 900, step: 0.25 };
-  const kaymak = { ...newProduct('Kajmak', 'kg'), id: 'kajmak', price: 1800, step: 0.25, pack: { name: 'tegla', size: 0.5, price: 50 } };
-  const eggs = { ...newProduct('Jaja', 'kom'), id: 'jaja', price: 25, step: 10 };
+  const milk = { ...newProduct('Mleko', 'l'), id: 'mleko', price: 120, step: 0.5, pack: { name: 'flaša', size: 1.5, price: 30 }, icon: 'bottle' as const };
+  const sour = { ...newProduct('Kiselo mleko', 'l'), id: 'kiselo', price: 180, step: 0.5, pack: { name: 'tegla', size: 1, price: 40 }, icon: 'jar' as const };
+  const cheese = { ...newProduct('Sir', 'kg'), id: 'sir', price: 900, step: 0.25, icon: 'cheese' as const };
+  const kaymak = { ...newProduct('Kajmak', 'kg'), id: 'kajmak', price: 1800, step: 0.25, pack: { name: 'tegla', size: 0.5, price: 50 }, icon: 'jar' as const };
+  const eggs = { ...newProduct('Jaja', 'kom'), id: 'jaja', price: 25, step: 10, icon: 'egg' as const };
 
   return {
-    producer: { name: 'Domaćinstvo Jovanović', place: 'Ripanj, Kružni put 12', phone: '064 123 4567', note: 'Muzu u 7, mleko je spremno od 8.' },
+    producer: {
+      name: 'Domaćinstvo Jovanović',
+      place: 'Ripanj, Kružni put 12',
+      phone: '064 123 4567',
+      note: 'Muzu u 7, mleko je spremno od 8.',
+      point: { lat: 44.6337, lng: 20.5246 },
+    },
     products: [milk, sour, cheese, kaymak, eggs],
     split: 'equal',
     meetPlace: 'Ispred ulaza 3',
+    meetPoint: { lat: 44.7866, lng: 20.4489 },
     organize: ['everyone'],
     order: ['everyone'],
   };
@@ -69,6 +76,7 @@ function round(settings: Settings, farmAt: string, closesAt: string, meetAt: str
     closesAt,
     meetAt,
     meetPlace: settings.meetPlace,
+    meetPoint: settings.meetPoint,
     bottlesNote: 'Prazne flaše ostavite kod mene (ulaz 3, stan 7) do petka u 20h.',
     note: '',
     status: 'open',
@@ -89,7 +97,7 @@ const ORDERS_SEED: Record<string, Line>[] = [
   { mleko: { qty: 2.5, own: true }, kiselo: { qty: 1, own: true } },
 ];
 
-export function seedDevMleko() {
+export function seedDev() {
   const params = new URLSearchParams(location.search);
   const lang = params.get('lang');
   if (lang) document.documentElement.lang = lang;

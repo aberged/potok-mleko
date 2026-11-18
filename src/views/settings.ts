@@ -1,14 +1,18 @@
-// For editors: the producer, the products with their prices and packaging,
-// how the trip is shared, the usual place for handing out, and who may open
-// rounds and order. Saving writes the config, and with it the rules Potok
-// checks every write against.
+// For editors: the producer and where they are, the products with their
+// icons, prices and packaging, how the trip is shared, the usual place for
+// handing out, and who may open rounds and order. Saving writes the config,
+// and with it the rules Potok checks every write against.
 
 import { html, nothing } from 'lit-html';
+import { live } from 'lit-html/directives/live.js';
 import { MAX_PRODUCTS, UNITS, defaultStep, newProduct, settingsProblems, type Product, type Settings } from '../model/config';
 import { currency } from '../model/format';
+import { PRODUCT_ICONS, iconFor } from '../model/product-icons';
 import { goList, saveSettings } from '../store/actions';
 import { state, update } from '../store/state';
 import { button, card, cardHead, field, iconButton, notice, numberField, rolePicker, select, toggle, ui, unitLabel } from './common';
+import { placeMapButton } from './map-picker';
+import { ICON_LABELS, productIcon } from './product-icons';
 
 function change(edit: (settings: Settings) => void) {
   update((s) => s.settingsDraft && edit(s.settingsDraft));
@@ -19,6 +23,32 @@ function changeProduct(index: number, edit: (product: Product) => void) {
 }
 
 const PROBLEMS = { noProducts: 'noProducts', productName: 'productNameMissing', packSize: 'packSizeMissing' } as const;
+
+/** The icons of the product's unit, as radio buttons: arrows move among them. */
+function iconPicker(product: Product, index: number) {
+  const t = ui.t;
+  const labelId = `settings-product-icon-label-${index}`;
+
+  return html`<div class="pm-icon-picker">
+    <span class="pm-label" id=${labelId}>${t('productIcon')}</span>
+    <div class="pm-icon-choices" role="radiogroup" aria-labelledby=${labelId} id="settings-product-icon-${index}">
+      ${PRODUCT_ICONS[product.unit].map(
+        (key) => html`<label class="pm-icon-choice" title=${t(ICON_LABELS[key])}>
+          <input
+            type="radio"
+            class="pm-sr-only"
+            name="product-icon-${product.id}"
+            value=${key}
+            aria-label=${t(ICON_LABELS[key])}
+            .checked=${live(product.icon === key)}
+            @change=${() => changeProduct(index, (p) => (p.icon = key))}
+          />
+          ${productIcon(key, 'size-6')}
+        </label>`,
+      )}
+    </div>
+  </div>`;
+}
 
 function productEditor(product: Product, index: number, count: number, tried: boolean) {
   const t = ui.t;
@@ -42,6 +72,7 @@ function productEditor(product: Product, index: number, count: number, tried: bo
           changeProduct(index, (p) => {
             p.unit = u;
             p.step = defaultStep(u);
+            p.icon = iconFor(u, p.icon);
           }),
         { id: `settings-product-unit-${index}`, label: t('unit') },
       )}
@@ -56,6 +87,7 @@ function productEditor(product: Product, index: number, count: number, tried: bo
           : nothing}
       </div>
     </div>
+    ${iconPicker(product, index)}
     <div class="pm-grid pm-grid-tight">
       ${numberField(product.price, (n) => changeProduct(index, (p) => (p.price = n)), {
         id: `settings-product-price-${index}`,
@@ -129,11 +161,21 @@ export function settingsView() {
             maxlength: 60,
           })}
         </div>
-        ${field(draft.producer.place, (v) => change((s) => (s.producer.place = v)), {
-          id: 'settings-producer-place',
-          label: t('producerPlace'),
-          placeholder: t('producerPlacePlaceholder'),
-        })}
+        <div class="pm-place-field">
+          ${field(draft.producer.place, (v) => change((s) => (s.producer.place = v)), {
+            id: 'settings-producer-place',
+            label: t('producerPlace'),
+            placeholder: t('producerPlacePlaceholder'),
+            className: 'pm-grow',
+          })}
+          ${placeMapButton(
+            t('mapProducerTitle'),
+            draft.producer.point,
+            draft.meetPoint,
+            (p) => change((s) => (s.producer.point = p)),
+            'settings-producer-map',
+          )}
+        </div>
         ${field(draft.producer.note, (v) => change((s) => (s.producer.note = v)), {
           id: 'settings-producer-note',
           label: t('producerNote'),
@@ -163,11 +205,15 @@ export function settingsView() {
           )}
         </div>
         <p class="pm-hint">${t('tripHint')}</p>
-        ${field(draft.meetPlace, (v) => change((s) => (s.meetPlace = v)), {
-          id: 'settings-meet-place',
-          label: t('meetPlaceDefault'),
-          placeholder: t('meetPlacePlaceholder'),
-        })}`,
+        <div class="pm-place-field">
+          ${field(draft.meetPlace, (v) => change((s) => (s.meetPlace = v)), {
+            id: 'settings-meet-place',
+            label: t('meetPlaceDefault'),
+            placeholder: t('meetPlacePlaceholder'),
+            className: 'pm-grow',
+          })}
+          ${placeMapButton(t('mapMeetTitle'), draft.meetPoint, draft.producer.point, (p) => change((s) => (s.meetPoint = p)), 'settings-meet-map')}
+        </div>`,
       { id: 'settings-trip' },
     )}
 

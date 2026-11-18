@@ -3,7 +3,7 @@
 // the collection's rule; what comes back goes into the state at once, and the
 // same change arriving live later changes nothing.
 
-import { DRIVERS, ORDERS, ROUNDS, amount, fromConfigData, settingsProblems, toConfigData } from '../model/config';
+import { DRIVERS, ORDERS, ROUNDS, amount, fromConfigData, settingsProblems, toConfigData, type Point } from '../model/config';
 import { newDriver, ownOffer, resolveDrivers, toDriverData, type Driver } from '../model/driver';
 import { toOrderData } from '../model/order';
 import { roundProblems, toRoundData, type Round, type RoundStatus } from '../model/round';
@@ -53,6 +53,31 @@ async function run(key: string, write: () => Promise<void>) {
 
 export function confirm(text: string, action: () => void, options: { danger?: boolean; label?: string } = {}) {
   update((s) => (s.dialog = { kind: 'confirm', text, action, danger: options.danger ?? true, label: options.label }));
+}
+
+// --- Places on the map ---
+
+/** Opens the map to pick a point; `save` gets it, or null when the pin is taken away. */
+export function pickOnMap(title: string, start: Point | null, near: Point | null, save: (point: Point | null) => void) {
+  update((s) => (s.dialog = { kind: 'map', title, start, point: start, near, status: 'loading', save }));
+}
+
+/**
+ * Takes the viewer to Potok's map at the point, with the group's picture on
+ * the pin and `label` on its card. A page older than `openMap` asks to be
+ * opened again.
+ */
+export function showOnMap(point: Point, label: string) {
+  const potok = window.potok;
+  if (typeof potok?.openMap !== 'function') {
+    toast(t('outdated'));
+    return;
+  }
+
+  void run('map', async () => {
+    const reply = await potok.openMap({ lat: point.lat, lng: point.lng, label: label.trim().slice(0, 80) });
+    if (!reply.ok) toast(reply.error === 'unknown_method' ? t('outdated') : errorText(reply));
+  });
 }
 
 // --- Screens ---

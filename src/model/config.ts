@@ -5,6 +5,7 @@
 
 import type { PotokConfigData, PotokRoleKey, PotokRule } from '../potok';
 import { newId } from './ids';
+import { defaultIcon, iconFor, type ProductIcon } from './product-icons';
 
 export const ROUNDS = 'rounds';
 export const ORDERS = 'orders';
@@ -13,7 +14,7 @@ export const DRIVERS = 'drivers';
 export type Unit = 'l' | 'kg' | 'kom';
 export const UNITS: Unit[] = ['l', 'kg', 'kom'];
 
-/** The producer's own packaging: a bottle (or a jar) of `size` units for `price`. */
+/** The producer's own packaging: a bottle, a jar or a box of `size` units for `price`. */
 export type Pack = { name: string; size: number; price: number };
 
 export type Product = {
@@ -27,12 +28,20 @@ export type Product = {
   pack: Pack | null;
   /** Offered in new rounds. */
   active: boolean;
+  /** One of its unit's icons (`PRODUCT_ICONS`). */
+  icon: ProductIcon;
 };
+
+/**
+ * A point on the map, in degrees. The app keeps it in its own data and links
+ * to Potok's map at it (`openMap`); the group's own place is never touched.
+ */
+export type Point = { lat: number; lng: number };
 
 /** How the trip is shared: the same part for every order, or by what each order costs. */
 export type Split = 'equal' | 'amount';
 
-export type Producer = { name: string; place: string; phone: string; note: string };
+export type Producer = { name: string; place: string; phone: string; note: string; point: Point | null };
 
 export type Settings = {
   producer: Producer;
@@ -40,6 +49,7 @@ export type Settings = {
   split: Split;
   /** Where neighbours usually take their goods. */
   meetPlace: string;
+  meetPoint: Point | null;
   /** Who may start a round. */
   organize: PotokRoleKey[];
   /** Who may order and drive. */
@@ -55,15 +65,16 @@ export function defaultStep(unit: Unit): number {
 }
 
 export function newProduct(name = '', unit: Unit = 'l'): Product {
-  return { id: newId(), name, unit, price: 0, step: defaultStep(unit), pack: null, active: true };
+  return { id: newId(), name, unit, price: 0, step: defaultStep(unit), pack: null, active: true, icon: defaultIcon(unit) };
 }
 
 export function defaultSettings(productName: string): Settings {
   return {
-    producer: { name: '', place: '', phone: '', note: '' },
-    products: [newProduct(productName, 'l')],
+    producer: { name: '', place: '', phone: '', note: '', point: null },
+    products: [newProduct(productName, 'kom')],
     split: 'equal',
     meetPlace: '',
+    meetPoint: null,
     organize: ['everyone'],
     order: ['everyone'],
   };
@@ -89,6 +100,20 @@ function unit(value: unknown): Unit {
   return value === 'kg' || value === 'kom' ? value : 'l';
 }
 
+/** Six decimals: about ten centimetres. */
+export const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
+
+/** A point from data: two finite numbers in range, else null. */
+export function point(value: unknown): Point | null {
+  if (!value || typeof value !== 'object') return null;
+  const { lat, lng } = value as Record<string, unknown>;
+  if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { lat: round6(lat), lng: round6(lng) };
+}
+
+export const pointData = (p: Point | null) => (p ? { lat: p.lat, lng: p.lng } : null);
+
 function pack(value: unknown): Pack | null {
   if (!value || typeof value !== 'object') return null;
   const raw = value as Record<string, unknown>;
@@ -113,6 +138,7 @@ export function product(value: unknown): Product | null {
     step: step > 0 ? step : defaultStep(u),
     pack: pack(raw.pack),
     active: raw.active !== false,
+    icon: iconFor(u, raw.icon),
   };
 }
 
@@ -139,10 +165,12 @@ export function fromConfigData(data: unknown, productName = ''): Settings {
       place: text(producer.place, 200),
       phone: text(producer.phone, 60),
       note: text(producer.note, 1000),
+      point: point(producer.point),
     },
     products,
     split: raw.split === 'amount' ? 'amount' : 'equal',
     meetPlace: text(raw.meet_place, 200),
+    meetPoint: point(raw.meet_point),
     organize: roleKeys(roles.organize),
     order: roleKeys(roles.order),
   };
@@ -157,6 +185,7 @@ export function productData(p: Product) {
     step: p.step,
     pack: p.pack ? { name: p.pack.name.trim(), size: p.pack.size, price: p.pack.price } : null,
     active: p.active,
+    icon: p.icon,
   };
 }
 
@@ -179,10 +208,12 @@ export function toConfigData(settings: Settings): PotokConfigData {
       place: settings.producer.place.trim(),
       phone: settings.producer.phone.trim(),
       note: settings.producer.note.trim(),
+      point: pointData(settings.producer.point),
     },
     products: settings.products.map(productData),
     split: settings.split,
     meet_place: settings.meetPlace.trim(),
+    meet_point: pointData(settings.meetPoint),
     roles: { organize: roleKeys(settings.organize), order: roleKeys(settings.order) },
     rules: rulesFor(settings),
   };

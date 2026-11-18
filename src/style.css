@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./leaflet.css";
 
 /* The dev mock is not in the build, but Tailwind would take its words for
    classes and add them to the build's CSS. */
@@ -768,11 +769,43 @@ body {
   gap: 10px 14px;
 }
 
-.pm-product-info {
+.pm-product-title {
   display: flex;
   flex: 1 1 12rem;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* The product's icon, in a soft tile as Potok's headers have. */
+.pm-product-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 0.875rem;
+  background: var(--pm-accent-soft);
+  color: var(--pm-accent);
+}
+
+.pm-product-info {
+  display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
+}
+
+/* A product's name with its small icon, in lists, chips and the table. */
+.pm-line-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pm-line-icon {
+  flex: none;
+  color: var(--pm-accent);
 }
 
 .pm-product-name {
@@ -1716,6 +1749,217 @@ body {
   display: flex;
   gap: 2px;
   margin-left: auto;
+}
+
+.pm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The icons of a product's unit, one to pick (radio buttons). */
+.pm-icon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pm-icon-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pm-icon-choice {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-base-300);
+  border-radius: var(--pm-radius-field);
+  background: var(--pm-surface);
+  color: var(--pm-muted);
+  cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out;
+}
+
+.pm-icon-choice:hover {
+  color: var(--pm-ink);
+}
+
+.pm-icon-choice:active {
+  transform: scale(0.95);
+}
+
+.pm-icon-choice:has(input:checked) {
+  border-color: var(--pm-accent-line);
+  background: var(--pm-accent-soft);
+  color: var(--pm-accent);
+}
+
+.pm-icon-choice:has(input:focus-visible) {
+  outline: 2px solid var(--pm-ring);
+  outline-offset: 2px;
+}
+
+/* A place in words with the button that picks it on the map. */
+.pm-place-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 10px;
+}
+
+.pm-place-field .pm-grow {
+  flex: 1 1 14rem;
+}
+
+.pm-place {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- Map ---------- */
+
+.pm-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  color: var(--pm-accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  vertical-align: baseline;
+  cursor: pointer;
+}
+
+.pm-map-link > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-map-link:focus-visible {
+  outline: 2px solid var(--pm-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.pm-map-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pm-map-frame {
+  position: relative;
+}
+
+/* Leaflet's panes stack up to z-index 1000: kept inside the box, under the dialog's head and footer. */
+.pm-map-box {
+  height: clamp(220px, 42vh, 420px);
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--pm-line);
+  border-radius: var(--pm-radius-field);
+}
+
+.pm-map-box.leaflet-container {
+  background: var(--color-base-200);
+  font: inherit;
+}
+
+.pm-map-box .leaflet-control-attribution {
+  font-size: 10px;
+  background: color-mix(in oklab, var(--color-base-100) 85%, transparent);
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+}
+
+.pm-map-box .leaflet-control-attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.pm-map-box .leaflet-bar {
+  border: 1px solid color-mix(in oklab, var(--color-base-300) 80%, transparent);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
+}
+
+.pm-map-box .leaflet-bar a {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-color: var(--color-base-300);
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  line-height: 2.25rem;
+}
+
+.pm-map-box .leaflet-bar a:hover {
+  background: var(--color-base-200);
+}
+
+/* The light tiles, turned dark in the dark theme, as in the Map app. */
+:where([data-theme="dark"]) .pm-map-box .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .pm-map-box .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+  }
+}
+
+.pm-map-pin {
+  background: none;
+  border: 0;
+  color: var(--pm-accent);
+}
+
+.pm-map-pin svg {
+  display: block;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.3));
+}
+
+.pm-map-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--pm-radius-field);
+  background: color-mix(in oklab, var(--color-base-200) 85%, transparent);
+  color: var(--pm-muted);
+  font-size: 14px;
+}
+
+.pm-map-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pm-map-foot .pm-hint {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  #map-dialog {
+    max-width: 40rem;
+  }
 }
 
 /* ---------- Chips ---------- */

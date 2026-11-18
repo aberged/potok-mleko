@@ -2,7 +2,7 @@
 // its own copy of the products, their prices and how the trip is shared, so
 // a later change in the settings leaves earlier rounds as they were.
 
-import { product, productData, type Product, type Settings, type Split } from './config';
+import { point, pointData, product, productData, type Point, type Product, type Settings, type Split } from './config';
 
 export type RoundStatus = 'open' | 'closed' | 'cancelled';
 
@@ -14,7 +14,9 @@ export type Round = {
   /** When neighbours take their goods. */
   meetAt: string;
   meetPlace: string;
-  /** Where and until when to leave empty bottles. */
+  /** Where goods are handed out, on the map; a copy of the settings' at first. */
+  meetPoint: Point | null;
+  /** Where and until when to leave the producer's empty packaging (`bottles_note`). */
   bottlesNote: string;
   note: string;
   status: RoundStatus;
@@ -50,6 +52,7 @@ export function fromRoundData(data: unknown): Round | null {
     closesAt,
     meetAt,
     meetPlace: text(raw.meet_place, 200),
+    meetPoint: point(raw.meet_point),
     bottlesNote: text(raw.bottles_note, 500),
     note: text(raw.note, 2000),
     status: raw.status === 'closed' || raw.status === 'cancelled' ? raw.status : 'open',
@@ -67,6 +70,7 @@ export function toRoundData(round: Round) {
     closes_at: round.closesAt,
     meet_at: round.meetAt,
     meet_place: round.meetPlace.trim(),
+    meet_point: pointData(round.meetPoint),
     bottles_note: round.bottlesNote.trim(),
     note: round.note.trim(),
     status: round.status,
@@ -121,6 +125,7 @@ export function newRound(settings: Settings, now: number): Round {
     closesAt: closes.toISOString(),
     meetAt: meet.toISOString(),
     meetPlace: settings.meetPlace,
+    meetPoint: settings.meetPoint ? { ...settings.meetPoint } : null,
     bottlesNote: '',
     note: '',
     status: 'open',

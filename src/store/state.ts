@@ -3,7 +3,7 @@
 // keeps its cursor.
 
 import type { PotokCollectionValue, PotokConfigReply, PotokData, PotokRole } from '../potok';
-import { defaultSettings, type Settings } from '../model/config';
+import { defaultSettings, type Point, type Settings } from '../model/config';
 import type { Driver } from '../model/driver';
 import type { Line, Order } from '../model/order';
 import type { Round } from '../model/round';
@@ -32,7 +32,24 @@ export type Details = {
 export type OrderDraft = { round: number; lines: Record<string, Line>; note: string; dirty: boolean };
 export type RoundDraft = { id: number | null; round: Round; drive: boolean; tried: boolean };
 
-export type Dialog = { kind: 'confirm'; text: string; action: () => void; danger?: boolean; label?: string };
+export type ConfirmDialog = { kind: 'confirm'; text: string; action: () => void; danger?: boolean; label?: string };
+
+/**
+ * Picking a point on the map (views/map-picker.ts). `start` is the point the
+ * dialog opened with, `point` the pin as it is now, `near` where to look when
+ * there is no pin yet. `save` writes into a draft; the form's Save keeps it.
+ */
+export type MapDialog = {
+  kind: 'map';
+  title: string;
+  start: Point | null;
+  point: Point | null;
+  near: Point | null;
+  status: 'loading' | 'ready' | 'failed';
+  save: (point: Point | null) => void;
+};
+
+export type Dialog = ConfirmDialog | MapDialog;
 
 export type State = {
   phase: Phase;
