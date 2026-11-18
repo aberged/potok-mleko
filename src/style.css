@@ -4,6 +4,8 @@
 /* The dev mock is not in the build, but Tailwind would take its words for
    classes and add them to the build's CSS. */
 @source not "./potok-dev.ts";
+/* The script that draws the icons as PNG files is not the app. */
+@source not "../scripts";
 
 /*! daisyUI | MIT License | https://daisyui.com */
 /* daisyUI with the `d-` prefix and no themes: the colors come from the potok
