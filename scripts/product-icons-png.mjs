@@ -6,8 +6,12 @@
 //   node scripts/product-icons-png.mjs
 //
 // It renders in headless Chrome; set CHROME to its path when it is not in the
-// usual place. Stroke 1.5 on the 24 grid, as in the app, in COLOR (#1f2937 by
-// default).
+// usual place. Stroke 1.5 on the 24 grid, as in the app, in COLOR.
+//
+// The default blue is Potok's hue at oklch(0.62 0.18 258): 3.7:1 against white
+// and 3.65:1 against the dark theme's #292f37, so the icons read on both. The
+// themes' own primaries do not: #0a5bc4 is 2.1:1 on the dark one, #7fd2f7 is
+// 1.7:1 on white.
 
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -17,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SIZES = [64, 512];
-const COLOR = process.env.COLOR || '#1f2937';
+const COLOR = process.env.COLOR || '#3983f0';
 const CHROME =
   process.env.CHROME ||
   (process.platform === 'win32'

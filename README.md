@@ -99,7 +99,7 @@ Stranica Potoka upisuje jezik u `<html lang>` okvira: `sr`, `sr-Cyrl` ili `en`. 
 | [src/views/map-picker.ts](src/views/map-picker.ts) | dijalog sa mapom (Leaflet), dugme „Izaberi na mapi“ i link „Prikaži na mapi“ |
 | [src/model/product-icons.ts](src/model/product-icons.ts), [src/views/product-icons.ts](src/views/product-icons.ts) | ikonice proizvoda po jedinici i njihovi crteži |
 | [src/leaflet.css](src/leaflet.css) | Leaflet-ov CSS bez slika, kao u aplikaciji Mapa |
-| [icons/products/](icons/products/) | ikonice proizvoda kao PNG (64 i 512 px, providna pozadina) za upotrebu van aplikacije; build ih ne uzima. Pravi ih ponovo `node scripts/product-icons-png.mjs` iz crteža u [src/views/product-icons.ts](src/views/product-icons.ts) |
+| [icons/products/](icons/products/) | ikonice proizvoda kao PNG (64 i 512 px, providna pozadina, plava #3983f0 koja se čita i na svetloj i na tamnoj pozadini) za upotrebu van aplikacije; build ih ne uzima. Pravi ih ponovo `node scripts/product-icons-png.mjs` iz crteža u [src/views/product-icons.ts](src/views/product-icons.ts) |
 | [src/views/icons.ts](src/views/icons.ts) | Heroicons, piše ga [scripts/icons.py](scripts/icons.py) iz `../potok-ide/deps/heroicons` |
 | [src/dev-tools.ts](src/dev-tools.ts), [src/dev-theme.css](src/dev-theme.css) | samo za dev |
 | [src/potok.ts](src/potok.ts), [src/potok-dev.ts](src/potok-dev.ts) | iz šablona; dodat `openMap` |
