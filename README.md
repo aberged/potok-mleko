@@ -102,7 +102,7 @@ Stranica Potoka upisuje jezik u `<html lang>` okvira: `sr`, `sr-Cyrl` ili `en`. 
 | [icons/products/](icons/products/) | ikonice proizvoda kao PNG (64 i 512 px, providna pozadina, plava #3983f0 koja se čita i na svetloj i na tamnoj pozadini) za upotrebu van aplikacije; build ih ne uzima. Pravi ih ponovo `node scripts/product-icons-png.mjs` iz crteža u [src/views/product-icons.ts](src/views/product-icons.ts) |
 | [src/views/icons.ts](src/views/icons.ts) | Heroicons, piše ga [scripts/icons.py](scripts/icons.py) iz `../potok-ide/deps/heroicons` |
 | [src/dev-tools.ts](src/dev-tools.ts), [src/dev-theme.css](src/dev-theme.css) | samo za dev |
-| [src/potok.ts](src/potok.ts), [src/potok-dev.ts](src/potok-dev.ts) | iz šablona; dodat `openMap` |
+| [src/potok.ts](src/potok.ts), [src/potok-dev.ts](src/potok-dev.ts) | iz šablona, bez izmena |
 | [vite.config.ts](vite.config.ts) | iz šablona, bez izmena |
 
 ## Licenca
