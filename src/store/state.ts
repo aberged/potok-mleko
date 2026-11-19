@@ -53,6 +53,8 @@ export type Dialog = ConfirmDialog | MapDialog;
 
 export type State = {
   phase: Phase;
+  /** Turned away with no profile: a guest, who may be a member not logged in. */
+  deniedGuest: boolean;
   reply: PotokConfigReply | null;
   groupName: string;
   settings: Settings;
@@ -84,6 +86,7 @@ export type State = {
 
 export const state: State = {
   phase: 'loading',
+  deniedGuest: false,
   reply: null,
   groupName: '',
   settings: defaultSettings(''),

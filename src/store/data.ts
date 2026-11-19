@@ -63,7 +63,13 @@ export async function boot(translate: Translate) {
 
   if (!first.ok) {
     const error = first.error;
+    // A guest is turned away like anyone outside, and may be a member who has
+    // not logged in: only the profile tells.
+    const denied = error === 'not_a_member' || error === 'forbidden';
+    const profile = denied ? await window.potok.getCurrentProfile().catch(() => undefined) : undefined;
+
     update((s) => {
+      s.deniedGuest = profile === null;
       if (error === 'unknown_method') s.phase = 'outdated';
       else if (error === 'preview') s.phase = 'previewFrame';
       else if (error === 'not_a_member' || error === 'forbidden') s.phase = 'denied';
@@ -337,7 +343,8 @@ function listen() {
       void reloadAll();
       return;
     }
-    if (change.event === 'regraded') return;
+    // No process of its own runs on these collections, and scores are a form's.
+    if (change.event === 'regraded' || change.event === 'process') return;
     if (change.event === 'deleted') {
       removeEverywhere(change.id);
       return;
